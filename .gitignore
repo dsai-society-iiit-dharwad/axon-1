@@ -55,4 +55,5 @@ build/
 dist/
 *.egg-info/
 
+input.txt
 Armor_Financial_Conversation_Intelligence_Problem_Statement.pdf

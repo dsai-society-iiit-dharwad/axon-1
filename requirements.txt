@@ -1,0 +1,29 @@
+# Armor — AI-Powered Multilingual Financial Conversation Intelligence
+# Core audio
+sounddevice
+scipy
+
+# Transcription
+faster-whisper
+
+# Speaker diarization (silence-gap based, no heavy model)
+
+# Language detection
+langdetect
+
+# Financial classifier (zero-shot)
+transformers
+
+# Named entity recognition
+gliner
+
+# LLM summarization (Ollama called via requests)
+requests
+
+# Database (sqlite3 is built-in, no pip needed)
+
+# UI
+streamlit
+
+# Notebook
+jupyter
