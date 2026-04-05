@@ -48,7 +48,7 @@ def transcribe_audio_groq(wav_path, api_key):
             data={
                 "model": "whisper-large-v3",
                 "response_format": "verbose_json",
-                "language": "en",
+                "language": "hi",
                 "temperature": 0.0,
                 "prompt": "Indian context. Currency is Rupees (₹), not Dollars. Terms: SIP, EMI, mutual fund."
             },

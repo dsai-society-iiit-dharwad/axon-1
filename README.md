@@ -1,38 +1,64 @@
-# Armor — Financial Conversation Intelligence
+# Armor: Financial Conversation Intelligence System
 
-## What Armor does in plain English
+Armor is an AI-powered system designed to capture, transcribe, and structure informal, multilingual financial conversations. Often, critical financial decisions (such as loans, SIPs, or investments) discussed in Hinglish or regional languages go undocumented. Armor records these discussions, extracts financial entities, and generates a structured JSON intelligence report tracking commitments and pending decisions.
 
-When Indians make financial decisions — taking a loan, starting
-an SIP, planning an investment — they talk about it casually with
-family and friends, in Hindi and English mixed together. These
-conversations are never recorded, commitments get forgotten, and
-disputes happen.
+## Features
 
-Armor listens to these conversations, figures out who said what,
-extracts every financial commitment made, and gives you a
-structured report: who committed to what, by when, and how risky
-the plan is. It works completely offline on your device, or
-10x faster using cloud APIs — your choice.
+- **Multilingual Speech-to-Text**: Transcribes code-mixed inputs (e.g., Hinglish) using Whisper models.
+- **Financial Topic Detection**: Filters out non-financial conversations to protect resources and privacy.
+- **Entity Extraction**: Identifies and normalizes financial instruments, amounts, and timelines.
+- **Structured Intelligence**: Uses LLMs to generate a concise summary of commitments, pending decisions, and a calculated risk score.
+- **Dual-Execution Mode**: 
+  - **Cloud Mode**: Fast processing using Groq API.
+  - **Local Mode**: Secure, on-device processing using local models (Ollama).
+- **Live Recording**: Capable of recording and analyzing live audio directly from the browser.
+
+## Architecture & Technology Stack
+
+The project operates on a decoupled architecture, separating the heavy machine-learning backend from the user interface.
+
+**Backend (Python / FastAPI)**
+- `FastAPI` / `Uvicorn`: Core REST API service.
+- `faster-whisper` & `Groq Whisper API`: Speech recognition.
+- `mDeBERTa`: Zero-shot classification for financial context detection.
+- `GLiNER-Multi`: Named Entity Recognition (NER).
+- `Ollama` (llama3.2:1b) & `Groq` (llama-3.3-70b): Summary and risk-score generation.
+- `SQLite`: Persistent localized database.
+
+**Frontend (React / Next.js)**
+- `Next.js 15` (App Router): Web framework.
+- `Tailwind CSS 4`: Styling and layout.
+- `Framer Motion`: Layout animations.
 
 ## Team Axon
-- Thejas — ML lead, ASR pipeline
-- Ryan — NLP, classifier, entity extraction
-- Surya — LLM summarization, backend
-- Sanketh — Frontend
+- Thejas 
+- Ryan 
+- Surya 
+- Sanketh 
 
-## Stack
-- faster-whisper (local ASR) / Groq Whisper API (cloud ASR)
-- mDeBERTa (financial classifier, with keyword shortcut)
-- GLiNER-Multi (NER) + Hinglish regex patterns
-- Silence-gap heuristic (N-speaker diarization)
-- gemma3:4b via Ollama (local) / llama-3.3-70b via Groq (cloud)
-- Streamlit UI with dual-mode toggle
-- SQLite for conversation history
+## Setup & Execution
 
-## Quick Start
-```bash
-pip install -r requirements.txt
-streamlit run app.py
+You will need to run the backend and frontend simultaneously in two separate terminals.
+
+### 1. Configuration
+Create a `.env` file in the root directory and add your API Key for Cloud Mode:
+```env
+GROQ_API_KEY="your_api_key_here"
 ```
 
-For cloud mode (10x faster), set your Groq API key in the sidebar.
+### 2. Start the Backend
+From the root project directory `Axon-1`:
+```bash
+python api.py
+```
+*(The FastAPI service will start on `http://localhost:8000`)*
+
+### 3. Start the Frontend
+Open a new terminal and navigate to the `frontend` directory:
+```bash
+cd frontend
+npm run dev
+```
+*(The React application will start on `http://localhost:3000`)*
+
+Open `http://localhost:3000` in your browser to access the dashboard. All recordings and uploaded audio are saved to `audio_samples/live_recordings/`.

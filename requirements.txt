@@ -20,6 +20,9 @@ gliner
 # LLM summarization (Ollama called via requests)
 requests
 
+# Cloud mode (Groq API)
+groq
+
 # Database (sqlite3 is built-in, no pip needed)
 
 # UI

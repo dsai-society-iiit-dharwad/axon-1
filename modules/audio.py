@@ -3,7 +3,7 @@ import scipy.io.wavfile as wav
 import numpy as np
 import os
 
-SAMPLE_RATE = 16000  # 16kHz mono — required by pyannote
+SAMPLE_RATE = 16000  # 16kHz mono — required by Whisper
 CHANNELS = 1
 
 

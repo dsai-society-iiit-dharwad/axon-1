@@ -44,10 +44,13 @@ def normalize_entity(raw_text):
         if hindi in cleaned:
             return normalized
 
-    # try to catch numeric patterns already in text
-    # e.g., "12,500" or "₹5000" or "8.5%"
+    # catch numeric patterns already in text (e.g. "12,500" or "₹5000")
     if re.search(r'[₹$%]|[\d,]+', cleaned):
-        return raw_text.strip()  # already looks normalized
+        # convert dollar hallucination to rupees
+        result = raw_text.strip()
+        if "$" in result:
+            result = result.replace("$", "₹")
+        return result
 
     return raw_text.strip()
 

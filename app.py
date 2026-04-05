@@ -137,8 +137,9 @@ def run_pipeline(audio_source, duration_sec=120):
                 entities.append({"text": str(tl), "label": "timeline",
                                  "short_label": "TIMELINE", "normalized": str(tl)})
 
-        is_financial = True
-        fin_score = 0.95  # Groq analyzed it — assume financial
+        is_financial = summary.get("is_financial", True)
+        fin_score = summary.get("financial_score", 0.95)
+        fin_label = "financial discussion" if is_financial else "general conversation"
 
     else:
         # ═══ LOCAL PATH: Full pipeline with local models ═══════════
@@ -193,6 +194,8 @@ def run_pipeline(audio_source, duration_sec=120):
         "language": lang_name, "is_financial": is_financial,
         "fin_score": fin_score, "entities": entities, "summary": summary,
         "duration": duration, "speaker_count": speaker_count,
+        "pipeline_time": round(total, 1),
+        "backend": "Cloud ⚡" if is_cloud else "Local 🔒",
     }
 
 
@@ -245,6 +248,12 @@ if page == "🎙️ Record & Analyze":
         st.stop()
 
     st.markdown("---")
+    st.caption(f"⏱ Processed in {result.get('pipeline_time', '?')}s using {result.get('backend', 'Unknown')} mode")
+
+    # non-financial warning
+    if not result["is_financial"]:
+        st.warning(f"⚠️ This conversation was NOT classified as financial "
+                   f"(score: {result['fin_score']:.0%}). Results may be limited.")
 
     # metrics row
     m1, m2, m3, m4, m5 = st.columns(5)
@@ -359,9 +368,13 @@ if page == "🎙️ Record & Analyze":
             for p in pending:
                 st.markdown(f"- {p}")
 
-    # raw JSON
+    # raw JSON + export
     with st.expander("🔍 Raw Summary JSON"):
         st.json(summary)
+
+    report_json = json.dumps(summary, indent=2, ensure_ascii=False)
+    st.download_button("📥 Download Report", report_json,
+                       file_name="armor_report.json", mime="application/json")
 
 
 # ═══════════════════════════════════════════════════════════════

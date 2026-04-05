@@ -25,8 +25,9 @@ KEYWORD_PATTERNS = {
         r"pandrah|bees|chaalees|pachaas|sau)\s*(?:hazaar(?:\s+paanch\s+sau)?)",
         r"saade\s+aath\s+percent",
         r"das\s+percent",
-        r"₹[\d,]+",
-        r"\d+[\d,]*\s*(?:rupees|rs|percent|%)",
+        r"[₹\$]\s*[\d,]+",
+        r"\d+[\d,]*\s*(?:rupees|rs|percent|%|\$|dollars?)",
+        r"\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b",  # matches standalone formatted numbers like 5,000 or 1,500,000
     ],
     "INSTRUMENT": [
         r"\bSIP\b", r"\bEMI\b", r"\bmutual\s+fund\b",

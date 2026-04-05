@@ -9,7 +9,7 @@ print("Loading models (one-time startup)...")
 
 # ── Whisper (speech-to-text) ────────────────────────────────────
 from faster_whisper import WhisperModel
-whisper_model = WhisperModel("medium", device="cpu", compute_type="int8")
+whisper_model = WhisperModel("base", device="cpu", compute_type="int8")
 print("  Whisper ready")
 
 # ── mDeBERTa (zero-shot classification) ─────────────────────────

@@ -4,7 +4,7 @@ import re
 
 # ── Local Backend (Ollama) ──────────────────────────────────────
 OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3.2:3b"
+OLLAMA_MODEL = "llama3.2:1b"
 
 # ── Cloud Backend (Groq — free, fast) ───────────────────────────
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -13,18 +13,21 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 SYSTEM_PROMPT = """
 You are a financial intelligence assistant analyzing a conversation
 between Indian speakers. There may be 2 or more speakers.
-You will receive a transcript with speaker labels and extracted
-financial entities.
+You will receive a transcript with speaker labels and optionally
+extracted financial entities.
 
 CRITICAL RULES:
 1. ALL text output MUST be in English. Translate any Hindi/Hinglish to English.
 2. ALL financial amounts MUST use Indian Rupees (₹). NEVER use Dollars ($). If no currency is spoken, assume Rupees (₹).
+3. First determine if this is a financial conversation. If not, set is_financial to false and return minimal data.
 
 Output ONLY valid JSON. No explanation. No markdown. No preamble.
 No trailing text after the closing brace.
 
 Output format:
 {
+  "is_financial": true,
+  "financial_score": 0.0-1.0,
   "commitments": [
     {"speaker": "Speaker 1", "commitment": "description"}
   ],
