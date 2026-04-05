@@ -86,7 +86,24 @@ def run_pipeline_headless(audio_source, backend="local", groq_key=""):
                     all_entities.append(e)
         entities = normalize_entities(all_entities)
         
-        summary = generate_summary(labeled, entities, backend="local")
+        if not is_financial:
+            summary = {
+                "is_financial": False,
+                "financial_score": fin_score,
+                "commitments": [],
+                "pending_decisions": [],
+                "financial_snapshot": {
+                    "instruments": [],
+                    "amounts": [],
+                    "timelines": []
+                },
+                "speaker_sentiments": [],
+                "risk_score": 0,
+                "risk_label": "Low",
+                "risk_reasoning": "Non-financial conversation detected. Generation bypassed."
+            }
+        else:
+            summary = generate_summary(labeled, entities, backend="local")
 
     # Store in DB
     duration = segments[-1]["end"] if segments else 0.0
@@ -96,6 +113,17 @@ def run_pipeline_headless(audio_source, backend="local", groq_key=""):
     save_speaker_turns(conv_id, turns)
     save_entities(conv_id, entities, turns)
     save_summary(conv_id, summary)
+
+    # Automatically dispatch to Telegram if it's a financial conversation
+    if is_financial:
+        try:
+            from modules.telegram_bot import send_telegram_summary
+            send_telegram_summary(chat_id="", summary_data=summary, app_url="http://localhost:3000")
+            print(f"Auto-dispatched Conv #{conv_id} to Telegram!")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Failed to auto-dispatch to Telegram: {e}")
 
     total_time = time.time() - t0
 
@@ -187,6 +215,22 @@ async def get_conversation(conv_id: int):
          result["summary"] = {}
 
     return result
+
+class TelegramPayload(BaseModel):
+    chat_id: str
+    summary: dict
+    app_url: str = ""
+
+@app.post("/api/telegram/send")
+async def send_to_telegram(payload: TelegramPayload):
+    try:
+        from modules.telegram_bot import send_telegram_summary
+        success = send_telegram_summary(payload.chat_id, payload.summary, payload.app_url)
+        return {"status": "success", "sent": success}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

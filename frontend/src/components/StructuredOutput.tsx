@@ -48,6 +48,10 @@ export default function StructuredOutput({ result }: { result: any }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [chatId, setChatId] = useState("");
+  const [tgStatus, setTgStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [tgError, setTgError] = useState("");
+
   const handleDownload = () => {
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -56,6 +60,29 @@ export default function StructuredOutput({ result }: { result: any }) {
     a.download = `armor_report_${result.conv_id}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const sendTelegram = async () => {
+    setTgStatus("loading");
+    setTgError("");
+    try {
+      const res = await fetch("http://localhost:8000/api/telegram/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          summary: structuredReport.financial_intelligence,
+          app_url: "http://localhost:3000"
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to send");
+      setTgStatus("success");
+      setTimeout(() => setTgStatus("idle"), 3000);
+    } catch (err: any) {
+      setTgStatus("error");
+      setTgError(err.message);
+    }
   };
 
   return (
@@ -108,11 +135,41 @@ export default function StructuredOutput({ result }: { result: any }) {
       </div>
 
       {/* JSON Viewer */}
-      <div className="p-5 max-h-[600px] overflow-auto custom-scrollbar">
+      <div className="p-5 max-h-[450px] overflow-auto custom-scrollbar border-b border-white/5">
         <pre className="text-sm leading-relaxed font-mono">
           <JSONHighlighter json={structuredReport} />
         </pre>
       </div>
+
+      {/* Telegram Export Bar */}
+      <div className="p-4 bg-[#0A0A0A] flex flex-wrap sm:flex-nowrap items-center justify-between gap-4">
+        <div className="flex flex-col">
+           <h3 className="text-sm font-semibold text-white/90">Automated Dispatch</h3>
+           <p className="text-[11px] text-muted-foreground">Send insights via Telegram Bot</p>
+        </div>
+        <div className="flex w-full sm:w-auto items-center gap-2">
+           <input 
+             type="text" 
+             placeholder="Chat ID (Leave blank for .env default)"
+             value={chatId}
+             onChange={(e) => setChatId(e.target.value)}
+             className="bg-[#111] border border-[#222] text-xs px-3 py-2 rounded focus:outline-none focus:border-brand-teal/50 text-white min-w-[200px]"
+             disabled={tgStatus === "loading"}
+           />
+           <button 
+             onClick={sendTelegram}
+             disabled={tgStatus === "loading" || tgStatus === "success"}
+             className="px-4 py-2 bg-brand-teal/20 hover:bg-brand-teal/30 text-brand-teal text-xs font-semibold rounded border border-brand-teal/20 transition-all disabled:opacity-50 min-w-[120px]"
+           >
+             {tgStatus === "loading" ? "Dispatching..." : tgStatus === "success" ? "✓ Sent to TG" : "Dispatch Report"}
+           </button>
+        </div>
+      </div>
+      {tgError && (
+        <div className="px-4 pb-4 bg-[#0A0A0A] text-red-400 text-xs text-right">
+          Error: {tgError}
+        </div>
+      )}
 
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }

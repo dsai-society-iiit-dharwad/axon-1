@@ -1,64 +1,83 @@
-# Armor: Financial Conversation Intelligence System
+<div align="center">
+  <img src="https://img.shields.io/badge/Armor-Intelligence-000000?style=for-the-badge&logoColor=white" alt="Armor Logo" />
+  <h1 align="center">Armor Financial Intelligence</h1>
+  <p align="center">
+    <strong>An end-to-end Machine Learning pipeline for structuring multilingual financial conversations.</strong>
+  </p>
 
-Armor is an AI-powered system designed to capture, transcribe, and structure informal, multilingual financial conversations. Often, critical financial decisions (such as loans, SIPs, or investments) discussed in Hinglish or regional languages go undocumented. Armor records these discussions, extracts financial entities, and generates a structured JSON intelligence report tracking commitments and pending decisions.
+  <p align="center">
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=FastAPI&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/HuggingFace-FFD21E?style=flat-square&logo=huggingface&logoColor=black" alt="HuggingFace" />
+    <img src="https://img.shields.io/badge/Ollama-000000?style=flat-square&logo=ollama&logoColor=white" alt="Ollama" />
+    <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white" alt="Next.js" />
+  </p>
+</div>
 
-## Features
+---
 
-- **Multilingual Speech-to-Text**: Transcribes code-mixed inputs (e.g., Hinglish) using Whisper models.
-- **Financial Topic Detection**: Filters out non-financial conversations to protect resources and privacy.
-- **Entity Extraction**: Identifies and normalizes financial instruments, amounts, and timelines.
-- **Structured Intelligence**: Uses LLMs to generate a concise summary of commitments, pending decisions, and a calculated risk score.
-- **Dual-Execution Mode**: 
-  - **Cloud Mode**: Fast processing using Groq API.
-  - **Local Mode**: Secure, on-device processing using local models (Ollama).
-- **Live Recording**: Capable of recording and analyzing live audio directly from the browser.
+## 🛡️ The Problem
 
-## Architecture & Technology Stack
+In India, critical financial decisions (EMIs, SIPs, loans, informal debt) are frequently discussed in code-mixed languages like Hinglish. Because these conversations are unstructured, tracking subjective financial risk and formal commitments is incredibly difficult. 
 
-The project operates on a decoupled architecture, separating the heavy machine-learning backend from the user interface.
+**Armor** is an autonomous ML pipeline that passively transcribes, classifies, and extracts structured intelligence from raw conversational audio.
 
-**Backend (Python / FastAPI)**
-- `FastAPI` / `Uvicorn`: Core REST API service.
-- `faster-whisper` & `Groq Whisper API`: Speech recognition.
-- `mDeBERTa`: Zero-shot classification for financial context detection.
-- `GLiNER-Multi`: Named Entity Recognition (NER).
-- `Ollama` (llama3.2:1b) & `Groq` (llama-3.3-70b): Summary and risk-score generation.
-- `SQLite`: Persistent localized database.
+---
 
-**Frontend (React / Next.js)**
-- `Next.js 15` (App Router): Web framework.
-- `Tailwind CSS 4`: Styling and layout.
-- `Framer Motion`: Layout animations.
+## 🧠 The AI / ML Pipeline
 
-## Team Axon
-- Thejas 
-- Ryan 
-- Surya 
-- Sanketh 
+Armor is built around a rigorous, multi-stage machine learning orchestrated pipeline designed to run both locally and in the cloud.
 
-## Setup & Execution
+1. **Audio Transcription (`faster-whisper`)**: Processes raw 16kHz mono WAV audio to transcribe code-mixed inputs (e.g., Hinglish) into raw text with word-level timestamps.
+2. **Language Detection (`langdetect`)**: Identifies the primary language topology.
+3. **Speaker Diarization**: Leverages silence-gap heuristics and speaker-segmentation to actively toggle between interlocutors (e.g., `Speaker 1` and `Speaker 2`).
+4. **Context Classification (`mDeBERTa`)**: Utilizes `MoritzLaurer/mDeBERTa-v3-base-mnli-xnli` (Zero-Shot Classification) to aggressively filter out non-financial dialogue, protecting the LLM from hallucinating on casual conversations.
+5. **Named Entity Recognition (`GLiNER`)**: Uses `urchade/gliner_multi-v2.1` to extract unstructured monetary spans, timelines, and financial instruments natively in Hindi/English context.
+6. **Entity Normalization**: Maps localized verbal terms (e.g., *"barah hazaar paanch sau"*) to structured integers (*"₹12,500"*).
+7. **Generative Intelligence (`Ollama` / `Llama`)**: Parses the normalized entities and diarized transcript through `llama3.2:1b` or `llama-3.3-70b` using strict JSON-schema enforcement to extract final commitments, subjective sentiments, and a calculated Risk Score.
 
-You will need to run the backend and frontend simultaneously in two separate terminals.
+---
 
-### 1. Configuration
-Create a `.env` file in the root directory and add your API Key for Cloud Mode:
+## 🚀 Setup & Execution
+
+You will need two open terminal windows to run the localized simulation. Ensure you have Node.js and Python 3.10+ installed.
+
+### 1. Environment Configurations
+Create a `.env` file in your root `Axon-1/` project folder and configure your keys:
 ```env
-GROQ_API_KEY="your_api_key_here"
+# Required for Cloud Inference (Groq)
+GROQ_API_KEY="your_groq_key"
+
+# Required for Automated Telegram Dispatch
+TELEGRAM_BOT_TOKEN="your_botfather_token"
+TELEGRAM_CHAT_ID="your_personal_chat_id" 
+
+# Local Hook
+OLLAMA_URL="http://localhost:11434"
 ```
 
-### 2. Start the Backend
-From the root project directory `Axon-1`:
+### 2. Boot the ML Backend
+From the root project directory:
 ```bash
+# Activate your virtual environment
+.venv\Scripts\activate
+
+# Start the FastAPI Orchestrator
 python api.py
 ```
-*(The FastAPI service will start on `http://localhost:8000`)*
+> The FastAPI service will load the Whisper, mDeBERTa, and GLiNER tensors into memory and bind to `http://localhost:8000`.
 
-### 3. Start the Frontend
-Open a new terminal and navigate to the `frontend` directory:
+### 3. Boot the UX Dashboard
+Open a new terminal session:
 ```bash
 cd frontend
 npm run dev
 ```
-*(The React application will start on `http://localhost:3000`)*
+> The React application will spin up at `http://localhost:3000`. Audio captures are dynamically stored to `audio_samples/live_recordings/`.
 
-Open `http://localhost:3000` in your browser to access the dashboard. All recordings and uploaded audio are saved to `audio_samples/live_recordings/`.
+---
+
+## 👥 Axon Team Leads
+**Thejas** 
+**Ryan**
+**Surya** 
+**Sanketh**

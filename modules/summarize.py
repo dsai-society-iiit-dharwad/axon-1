@@ -19,12 +19,12 @@ extracted financial entities.
 CRITICAL RULES:
 1. ALL text output MUST be in English. Translate any Hindi/Hinglish to English.
 2. ALL financial amounts MUST use Indian Rupees (₹). NEVER use Dollars ($). If no currency is spoken, assume Rupees (₹).
-3. First determine if this is a financial conversation. If not, set is_financial to false and return minimal data.
+3. First determine if this is a financial conversation. If it is NOT a financial discussion, you MUST stop generating and return exactly this empty JSON: {"is_financial": false, "financial_score": 0.0, "commitments": [], "pending_decisions": [], "financial_snapshot": {"instruments": [], "amounts": [], "timelines": []}, "speaker_sentiments": [], "risk_score": 0, "risk_label": "Low", "risk_reasoning": "No financial context"} - DO NOT hallucinate names or amounts.
 
 Output ONLY valid JSON. No explanation. No markdown. No preamble.
 No trailing text after the closing brace.
 
-Output format:
+Output format for FINANCIAL conversations:
 {
   "is_financial": true,
   "financial_score": 0.0-1.0,
@@ -117,7 +117,8 @@ def _call_ollama(prompt, st_placeholder=None):
     response = requests.post(
         OLLAMA_URL,
         json={"model": OLLAMA_MODEL, "prompt": prompt,
-              "system": SYSTEM_PROMPT, "stream": use_stream},
+              "system": SYSTEM_PROMPT, "stream": use_stream,
+              "format": "json"},
         timeout=300, stream=use_stream
     )
     response.raise_for_status()

@@ -57,7 +57,7 @@ export default function TranscriptView({ turns, entities }: { turns: any[]; enti
               key={i} 
               className={`flex flex-col max-w-[85%] ${isMe ? "ml-auto items-end" : "mr-auto items-start"}`}
             >
-              <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">{turn.speaker} <span className="opacity-50">({turn.start.toFixed(1)}s)</span></span>
+              <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">{turn.speaker} <span className="opacity-50">({(turn.start ?? turn.start_sec ?? 0).toFixed(1)}s)</span></span>
               <div 
                 className={`p-4 rounded-3xl ${
                   isMe 

@@ -7,10 +7,12 @@ import TranscriptView from "./TranscriptView";
 import InsightsPanel from "./InsightsPanel";
 import AISummary from "./AISummary";
 import StructuredOutput from "./StructuredOutput";
+import HistoryDashboard from "./HistoryDashboard";
 
 type ProcessingStep = "idle" | "listening" | "transcribing" | "extracting" | "summarizing" | "done";
 
 export default function Dashboard() {
+  const [view, setView] = useState<"analysis" | "history">("analysis");
   const [mode, setMode] = useState<"local" | "cloud">("cloud");
   const [groqKey, setGroqKey] = useState("");
   const [step, setStep] = useState<ProcessingStep>("idle");
@@ -56,9 +58,9 @@ export default function Dashboard() {
           formData.append("file", audioFile);
 
           const res = await fetch("http://localhost:8000/api/analyze", { method: "POST", body: formData });
-          if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
-          
           const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || `Server error: ${res.statusText}`);
+          
           clearTimeout(t1);
           clearTimeout(t2);
           setResult(data);
@@ -122,12 +124,9 @@ export default function Dashboard() {
         method: "POST",
         body: formData,
       });
-
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.statusText}`);
-      }
-      
       const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `Server error: ${res.statusText}`);
+      
       clearTimeout(t1);
       clearTimeout(t2);
       setResult(data);
@@ -142,75 +141,113 @@ export default function Dashboard() {
 
   const stepsList = [
     { id: "listening", label: "Listening to Conversation" },
-    { id: "transcribing", label: "Transcribing Audio" },
-    { id: "extracting", label: "Extracting AI Entities" },
-    { id: "summarizing", label: "Generating Intelligence" },
+    { id: "transcribing", label: "Transcribing Audio & Language" },
+    { id: "extracting", label: "Extracting Financial Entities" },
+    { id: "summarizing", label: "Generating LLaMA Intelligence" },
   ];
 
-  return (
-    <div className="w-full max-w-7xl mx-auto px-4 pb-20">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* LEFT PANEL: INPUT CONTROL */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="glass-panel rounded-3xl p-6">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-brand-blue" />
-              Configure Analysis
-            </h2>
+  const loadHistoryDetail = async (id: number) => {
+    try {
+      setStep("transcribing"); // show loading state momentarily
+      setView("analysis"); // switch back to analysis view
+      const res = await fetch(`http://localhost:8000/api/history/${id}`);
+      if (!res.ok) throw new Error("Failed to load conversation");
+      const data = await res.json();
+      setResult(data);
+      setStep("done");
+    } catch (err: any) {
+      setError(err.message);
+      setStep("idle");
+    }
+  };
 
-            <div className="flex bg-black/40 rounded-xl p-1 mb-6 border border-white/5">
+  return (
+    <div className="w-full max-w-[1400px] mx-auto px-6 pb-20 mt-8">
+      
+      {/* Top View Toggle */}
+      <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
+        <div>
+           <h2 className="text-xl font-bold text-white tracking-tight">Intelligence Engine</h2>
+           <p className="text-sm text-muted-foreground mt-1">Live capture and financial insight extraction</p>
+        </div>
+        <div className="bg-[#111] p-1 rounded-md flex border border-white/10 max-w-[300px]">
+          <button
+            onClick={() => setView("analysis")}
+            className={`px-4 py-1.5 rounded text-xs font-semibold tracking-wide transition-all ${
+              view === "analysis" ? "bg-white/10 text-white shadow-sm border border-white/5" : "text-muted-foreground hover:text-white"
+            }`}
+          >
+            Terminal
+          </button>
+          <button
+            onClick={() => setView("history")}
+            className={`px-4 py-1.5 rounded text-xs font-semibold tracking-wide transition-all ${
+              view === "history" ? "bg-white/10 text-white shadow-sm border border-white/5" : "text-muted-foreground hover:text-white"
+            }`}
+          >
+            Vault Hub
+          </button>
+        </div>
+      </div>
+
+      {view === "history" ? (
+        <div className="h-full min-h-[600px] w-full animate-in fade-in">
+          <HistoryDashboard onViewDetail={loadHistoryDetail} />
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 auto-rows-min">
+        
+        {/* LEFT PANEL: BENTO RECORDING CONTROL */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
+          <div className="bg-[#0A0A0A] border border-[var(--border)] rounded-xl p-5 shadow-2xl flex flex-col h-full">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-white/40" /> Settings
+              </span>
+            </div>
+
+            <div className="flex bg-[#111] rounded-md p-1 mb-6 border border-white/5">
               <button
                 onClick={() => setMode("local")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                  mode === "local" ? "bg-muted text-white shadow-sm" : "text-muted-foreground hover:text-white"
+                className={`flex-1 py-1.5 rounded text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+                  mode === "local" ? "bg-white/15 text-white" : "text-muted-foreground hover:text-white"
                 }`}
               >
-                <Lock className="w-4 h-4" /> Local Edge
+                <Lock className="w-3.5 h-3.5" /> Edge
               </button>
               <button
                 onClick={() => setMode("cloud")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                  mode === "cloud" ? "bg-brand-blue text-white shadow-md shadow-brand-blue/20" : "text-muted-foreground hover:text-white"
+                className={`flex-1 py-1.5 rounded text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+                  mode === "cloud" ? "bg-brand-teal text-black" : "text-muted-foreground hover:text-white"
                 }`}
               >
-                <Cloud className="w-4 h-4" /> Cloud Fast
+                <Cloud className="w-3.5 h-3.5" /> Cloud
               </button>
             </div>
 
-            <div className="space-y-3">
-              {/* 🎙️ RECORD LIVE — Primary Action */}
+            <div className="space-y-2 mt-auto">
+              {/* 🎙️ RECORD LIVE */}
               {!isRecording ? (
                 <button
                   onClick={startRecording}
                   disabled={step !== "idle" && step !== "done"}
-                  className="w-full relative group bg-gradient-to-r from-red-500/10 to-red-500/5 hover:from-red-500/20 hover:to-red-500/10 border border-red-500/20 hover:border-red-500/30 rounded-2xl p-4 flex items-center gap-4 transition-all disabled:opacity-50"
-                >
-                  <div className="bg-red-500/20 p-3 rounded-full text-red-400">
-                    <Radio className="w-6 h-6" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-red-300">Record Live Conversation</h3>
-                    <p className="text-xs text-muted-foreground">Tap to start recording from microphone</p>
+                  className="w-full relative group bg-white hover:bg-white/90 border border-transparent text-black rounded-lg p-3 flex justify-between items-center transition-all disabled:opacity-50"
+               >
+                  <div className="flex items-center gap-3">
+                    <Radio className="w-4 h-4 text-brand-teal" />
+                    <span className="text-sm font-bold tracking-tight">Initialize Mic</span>
                   </div>
                 </button>
               ) : (
                 <button
                   onClick={stopRecording}
-                  className="w-full relative group bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all animate-pulse"
+                  className="w-full relative group bg-red-500 hover:bg-red-600 text-white rounded-lg p-3 flex justify-between items-center transition-all animate-pulse"
                 >
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-30" />
-                    <div className="relative bg-red-500 p-3 rounded-full text-white">
-                      <Square className="w-6 h-6" />
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <Square className="w-4 h-4" />
+                    <span className="text-sm font-bold tracking-tight">Stop Target</span>
                   </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-red-300">Stop & Analyze</h3>
-                    <p className="text-xs text-red-400 font-mono">
-                      🔴 Recording... {formatTime(recordingTime)}
-                    </p>
-                  </div>
+                  <span className="text-xs font-mono">{formatTime(recordingTime)}</span>
                 </button>
               )}
 
@@ -218,21 +255,16 @@ export default function Dashboard() {
               <button
                 onClick={() => runAnalysis("demo")}
                 disabled={(step !== "idle" && step !== "done") || isRecording}
-                className="w-full relative group bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex items-center gap-4 transition-all disabled:opacity-50"
+                className="w-full bg-[#151515] hover:bg-[#222] border border-[var(--border)] rounded-lg p-3 flex items-center gap-3 transition-all disabled:opacity-50"
               >
-                <div className="bg-brand-blue/20 p-3 rounded-full text-brand-blue">
-                  <Mic className="w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold">Run Demo Audio</h3>
-                  <p className="text-xs text-muted-foreground">Arjun & Priya (Sample)</p>
-                </div>
+                <Mic className="w-4 h-4 text-white/50" />
+                <span className="text-sm font-medium text-white/80 tracking-tight">Simulate (Arjun & Priya)</span>
               </button>
 
               {/* Upload Audio */}
               <label
-                className={`w-full relative group hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex items-center gap-4 transition-all ${
-                  (step !== "idle" && step !== "done") || isRecording ? "opacity-50 cursor-not-allowed bg-white/5" : "cursor-pointer bg-brand-teal/5"
+                className={`w-full bg-[#151515] hover:bg-[#222] border border-[var(--border)] rounded-lg p-3 flex items-center gap-3 transition-all ${
+                  (step !== "idle" && step !== "done") || isRecording ? "opacity-50 cursor-not-allowed hidden" : "cursor-pointer"
                 }`}
               >
                 <input 
@@ -241,6 +273,7 @@ export default function Dashboard() {
                    className="hidden" 
                    disabled={(step !== "idle" && step !== "done") || isRecording}
                    onChange={async (e) => {
+                     // Keep exact file upload logic intact
                      if (e.target.files && e.target.files.length > 0) {
                         const file = e.target.files[0];
                         setStep("transcribing");
@@ -256,9 +289,9 @@ export default function Dashboard() {
                           formData.append("file", file);
 
                           const res = await fetch("http://localhost:8000/api/analyze", { method: "POST", body: formData });
-                          if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
-                          
                           const data = await res.json();
+                          if (!res.ok) throw new Error(data.detail || `Server error: ${res.statusText}`);
+                          
                           clearTimeout(t1);
                           clearTimeout(t2);
                           setResult(data);
@@ -272,13 +305,8 @@ export default function Dashboard() {
                      }
                    }}
                 />
-                <div className="bg-brand-teal/20 p-3 rounded-full text-brand-teal">
-                  <Upload className="w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold">Upload Audio</h3>
-                  <p className="text-xs text-muted-foreground">WAV, MP3, M4A up to 25MB</p>
-                </div>
+                <Upload className="w-4 h-4 text-white/50" />
+                <span className="text-sm font-medium text-white/80 tracking-tight">Upload Asset</span>
               </label>
             </div>
 
@@ -291,36 +319,36 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* RIGHT PANEL: LIVE PROCESSING OR RESULTS */}
-        <div className="lg:col-span-8">
+        {/* RIGHT PANEL: BENTO RESULTS */}
+        <div className="lg:col-span-8 flex flex-col gap-4">
           {step === "idle" && !result && (
-             <div className="h-full min-h-[400px] glass-panel rounded-3xl flex flex-col items-center justify-center text-muted-foreground">
-               <ShieldIcon className="w-16 h-16 mb-4 opacity-20" />
-               <p>Waiting for audio input...</p>
+             <div className="h-full min-h-[400px] bg-[#0A0A0A] border border-[var(--border)] rounded-xl flex flex-col items-center justify-center text-muted-foreground shadow-2xl">
+               <span className="text-xs font-mono uppercase tracking-widest text-white/30 border border-white/5 py-1 px-3 rounded">Armor Engine</span>
+               <p className="mt-4 text-sm text-white/40">Select an input method to begin</p>
              </div>
           )}
 
           {step !== "idle" && step !== "done" && (
-            <div className="glass-panel rounded-3xl p-8 min-h-[400px] flex flex-col justify-center">
-              <h2 className="text-2xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">
-                Processing Conversation
+            <div className="bg-[#0A0A0A] border border-[var(--border)] rounded-xl p-8 min-h-[400px] flex flex-col justify-center">
+              <h2 className="text-lg font-bold mb-8 text-center text-white tracking-tight">
+                Processing Thread
               </h2>
-              <div className="space-y-6 max-w-md mx-auto w-full">
+              <div className="space-y-4 max-w-sm mx-auto w-full">
                 {stepsList.map((s, i) => {
                   const isActive = step === s.id;
                   const isPast = stepsList.findIndex((x) => x.id === step) > i;
                   return (
-                    <div key={s.id} className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-500 ${
-                        isActive ? "bg-brand-blue text-white shadow-[0_0_20px_rgba(59,130,246,0.5)]" : 
-                        isPast ? "bg-brand-teal text-white" : "bg-white/5 text-muted-foreground"
+                    <div key={s.id} className="flex items-center gap-4 py-2 border-b border-[var(--border)] last:border-0">
+                      <div className={`w-6 h-6 rounded flex items-center justify-center text-xs transition-colors duration-500 font-mono ${
+                        isActive ? "bg-white text-black" : 
+                        isPast ? "bg-brand-teal text-black" : "bg-white/5 text-muted-foreground"
                       }`}>
-                        {isActive ? <Loader2 className="w-5 h-5 animate-spin" /> : 
-                         isPast ? <span className="font-bold">✓</span> : 
-                         <span className="text-sm">{i + 1}</span>}
+                        {isActive ? <Loader2 className="w-3 h-3 animate-spin" /> : 
+                         isPast ? <span>✓</span> : 
+                         <span>{i + 1}</span>}
                       </div>
-                      <span className={`text-lg transition-colors duration-500 ${
-                        isActive ? "text-white font-semibold" : 
+                      <span className={`text-sm tracking-tight transition-colors duration-500 ${
+                        isActive ? "text-white font-medium" : 
                         isPast ? "text-white/70" : "text-muted-foreground"
                       }`}>
                         {s.label}
@@ -357,6 +385,7 @@ export default function Dashboard() {
         </div>
 
       </div>
+      )}
     </div>
   );
 }
